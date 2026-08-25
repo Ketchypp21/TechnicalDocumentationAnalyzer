@@ -6,16 +6,31 @@ namespace TechnicalDocumentationAnalyzer.Services;
 
 public static class CsvLoader
 {
-    private static readonly char[] PossibleDelimiters = { ';', ',', '\t' };
-
-    public static DataTable Load(string filePath)
+    private static readonly char[] PossibleDelimiters =
     {
-        char delimiter = DetectDelimiter(filePath);
+        ';',
+        ',',
+        '\t'
+    };
+
+    public static DataTable Load(
+        string filePath,
+        Encoding? selectedEncoding = null)
+    {
+        bool automaticEncoding = selectedEncoding is null;
+
+        Encoding encoding =
+            selectedEncoding ?? DetectEncoding(filePath);
+
+        char delimiter = DetectDelimiter(
+            filePath,
+            encoding,
+            automaticEncoding);
 
         using var parser = new TextFieldParser(
             filePath,
-            Encoding.UTF8,
-            detectEncoding: true);
+            encoding,
+            detectEncoding: automaticEncoding);
 
         parser.TextFieldType = FieldType.Delimited;
         parser.SetDelimiters(delimiter.ToString());
@@ -23,12 +38,15 @@ public static class CsvLoader
         parser.TrimWhiteSpace = true;
 
         if (parser.EndOfData)
-            throw new InvalidDataException("Выбранный CSV-файл пуст.");
+            throw new InvalidDataException(
+                "Выбранный CSV-файл пуст.");
 
         string[] headers = parser.ReadFields()
-            ?? throw new InvalidDataException("Не удалось прочитать заголовки CSV.");
+            ?? throw new InvalidDataException(
+                "Не удалось прочитать заголовки CSV.");
 
         var table = new DataTable();
+
         var usedColumnNames = new HashSet<string>(
             StringComparer.OrdinalIgnoreCase);
 
@@ -44,10 +62,25 @@ public static class CsvLoader
 
         while (!parser.EndOfData)
         {
-            string[]? fields = parser.ReadFields();
+            string[]? fields;
 
-            if (fields is null || fields.All(string.IsNullOrWhiteSpace))
+            try
+            {
+                fields = parser.ReadFields();
+            }
+            catch (MalformedLineException exception)
+            {
+                throw new InvalidDataException(
+                    $"Ошибка формата CSV в строке " +
+                    $"{exception.Message}.",
+                    exception);
+            }
+
+            if (fields is null ||
+                fields.All(string.IsNullOrWhiteSpace))
+            {
                 continue;
+            }
 
             if (fields.Length > table.Columns.Count)
             {
@@ -71,12 +104,112 @@ public static class CsvLoader
         return table;
     }
 
-    private static char DetectDelimiter(string filePath)
+    private static Encoding DetectEncoding(string filePath)
+    {
+        byte[] sample = ReadFileSample(filePath);
+
+        if (HasPrefix(sample, 0x00, 0x00, 0xFE, 0xFF))
+            return new UTF32Encoding(
+                bigEndian: true,
+                byteOrderMark: true);
+
+        if (HasPrefix(sample, 0xFF, 0xFE, 0x00, 0x00))
+            return Encoding.UTF32;
+
+        if (HasPrefix(sample, 0xEF, 0xBB, 0xBF))
+            return new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: true);
+
+        if (HasPrefix(sample, 0xFF, 0xFE))
+            return Encoding.Unicode;
+
+        if (HasPrefix(sample, 0xFE, 0xFF))
+            return Encoding.BigEndianUnicode;
+
+        if (IsValidUtf8(sample))
+            return new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: false);
+
+        // Наиболее распространённая кодировка
+        // старых русскоязычных SQL-выгрузок.
+        return Encoding.GetEncoding(1251);
+    }
+
+    private static byte[] ReadFileSample(string filePath)
+    {
+        const int maximumSampleSize = 65_536;
+
+        using var stream = File.OpenRead(filePath);
+
+        int sampleSize = (int)Math.Min(
+            stream.Length,
+            maximumSampleSize);
+
+        var sample = new byte[sampleSize];
+
+        int totalRead = 0;
+
+        while (totalRead < sample.Length)
+        {
+            int read = stream.Read(
+                sample,
+                totalRead,
+                sample.Length - totalRead);
+
+            if (read == 0)
+                break;
+
+            totalRead += read;
+        }
+
+        if (totalRead == sample.Length)
+            return sample;
+
+        return sample[..totalRead];
+    }
+
+    private static bool IsValidUtf8(byte[] bytes)
+    {
+        try
+        {
+            var strictUtf8 = new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: false,
+                throwOnInvalidBytes: true);
+
+            strictUtf8.GetString(bytes);
+            return true;
+        }
+        catch (DecoderFallbackException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasPrefix(
+        byte[] bytes,
+        params byte[] prefix)
+    {
+        if (bytes.Length < prefix.Length)
+            return false;
+
+        for (int i = 0; i < prefix.Length; i++)
+        {
+            if (bytes[i] != prefix[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    private static char DetectDelimiter(
+        string filePath,
+        Encoding encoding,
+        bool detectBom)
     {
         using var reader = new StreamReader(
             filePath,
-            Encoding.UTF8,
-            detectEncodingFromByteOrderMarks: true);
+            encoding,
+            detectEncodingFromByteOrderMarks: detectBom);
 
         string? firstLine;
 
@@ -88,15 +221,20 @@ public static class CsvLoader
                string.IsNullOrWhiteSpace(firstLine));
 
         if (firstLine is null)
-            throw new InvalidDataException("Выбранный CSV-файл пуст.");
+            throw new InvalidDataException(
+                "Выбранный CSV-файл пуст.");
 
         char selectedDelimiter = PossibleDelimiters
             .OrderByDescending(delimiter =>
-                CountDelimiterOutsideQuotes(firstLine, delimiter))
+                CountDelimiterOutsideQuotes(
+                    firstLine,
+                    delimiter))
             .First();
 
         int delimiterCount =
-            CountDelimiterOutsideQuotes(firstLine, selectedDelimiter);
+            CountDelimiterOutsideQuotes(
+                firstLine,
+                selectedDelimiter);
 
         if (delimiterCount == 0)
         {
@@ -120,7 +258,8 @@ public static class CsvLoader
             {
                 insideQuotes = !insideQuotes;
             }
-            else if (character == delimiter && !insideQuotes)
+            else if (character == delimiter &&
+                     !insideQuotes)
             {
                 count++;
             }

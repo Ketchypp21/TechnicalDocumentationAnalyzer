@@ -30,6 +30,8 @@ partial class Form1
     private void InitializeComponent()
     {
         topPanel = new System.Windows.Forms.Panel();
+        encodingComboBox = new System.Windows.Forms.ComboBox();
+        encodingLabel = new System.Windows.Forms.Label();
         recordsCountLabel = new System.Windows.Forms.Label();
         fileNameLabel = new System.Windows.Forms.Label();
         searchTextBox = new System.Windows.Forms.TextBox();
@@ -47,6 +49,8 @@ partial class Form1
         // 
         // topPanel
         // 
+        topPanel.Controls.Add(encodingComboBox);
+        topPanel.Controls.Add(encodingLabel);
         topPanel.Controls.Add(recordsCountLabel);
         topPanel.Controls.Add(fileNameLabel);
         topPanel.Controls.Add(searchTextBox);
@@ -64,9 +68,27 @@ partial class Form1
         topPanel.Size = new System.Drawing.Size(1184, 110);
         topPanel.TabIndex = 0;
         // 
+        // encodingComboBox
+        // 
+        encodingComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+        encodingComboBox.FormattingEnabled = true;
+        encodingComboBox.Location = new System.Drawing.Point(98, 19);
+        encodingComboBox.Name = "encodingComboBox";
+        encodingComboBox.Size = new System.Drawing.Size(411, 23);
+        encodingComboBox.TabIndex = 15;
+        // 
+        // encodingLabel
+        // 
+        encodingLabel.AutoSize = true;
+        encodingLabel.Location = new System.Drawing.Point(23, 22);
+        encodingLabel.Name = "encodingLabel";
+        encodingLabel.Size = new System.Drawing.Size(69, 15);
+        encodingLabel.TabIndex = 14;
+        encodingLabel.Text = "Кодировка:";
+        // 
         // recordsCountLabel
         // 
-        recordsCountLabel.Location = new System.Drawing.Point(265, 23);
+        recordsCountLabel.Location = new System.Drawing.Point(757, 22);
         recordsCountLabel.Name = "recordsCountLabel";
         recordsCountLabel.Size = new System.Drawing.Size(100, 19);
         recordsCountLabel.TabIndex = 13;
@@ -74,7 +96,7 @@ partial class Form1
         // 
         // fileNameLabel
         // 
-        fileNameLabel.Location = new System.Drawing.Point(159, 23);
+        fileNameLabel.Location = new System.Drawing.Point(651, 22);
         fileNameLabel.Name = "fileNameLabel";
         fileNameLabel.Size = new System.Drawing.Size(100, 19);
         fileNameLabel.TabIndex = 12;
@@ -141,7 +163,7 @@ partial class Form1
         // 
         // loadButton
         // 
-        loadButton.Location = new System.Drawing.Point(23, 13);
+        loadButton.Location = new System.Drawing.Point(515, 12);
         loadButton.Name = "loadButton";
         loadButton.Size = new System.Drawing.Size(130, 35);
         loadButton.TabIndex = 0;
@@ -179,6 +201,10 @@ partial class Form1
         ((System.ComponentModel.ISupportInitialize)documentsGrid).EndInit();
         ResumeLayout(false);
     }
+
+    private System.Windows.Forms.ComboBox encodingComboBox;
+
+    private System.Windows.Forms.Label encodingLabel;
 
     private System.Windows.Forms.Label recordsCountLabel;
 

@@ -12,7 +12,7 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
-
+        InitializeStatistics();
         FillEncodingList();
 
         loadButton.Click += LoadButton_Click;
@@ -128,6 +128,7 @@ public partial class Form1 : Form
                 _sourceTable.DefaultView;
 
             FillColumnFilter();
+            FillStatisticsColumnList();
 
             fileNameLabel.Text =
                 $"Файл: {Path.GetFileName(_currentFilePath)}";
@@ -137,6 +138,7 @@ public partial class Form1 : Form
                 $"{Path.GetFileName(_currentFilePath)}";
 
             UpdateRecordCount();
+            UpdateStatistics();
 
             if (showSuccessMessage)
             {
@@ -274,6 +276,7 @@ public partial class Form1 : Form
             string.Join(" AND ", expressions);
 
         UpdateRecordCount();
+        UpdateStatistics();
     }
 
     private void ResetFiltersButton_Click(

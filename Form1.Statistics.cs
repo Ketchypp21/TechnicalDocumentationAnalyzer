@@ -71,27 +71,32 @@ public partial class Form1
         int emptyCount = values.Count(
             string.IsNullOrWhiteSpace);
 
+        int filledCount =
+            totalCount - emptyCount;
+
         int uniqueCount = values
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Distinct(StringComparer.CurrentCultureIgnoreCase)
+            .Where(value =>
+                !string.IsNullOrWhiteSpace(value))
+            .Distinct(
+                StringComparer.CurrentCultureIgnoreCase)
             .Count();
 
         _statisticsItems.Clear();
 
         _statisticsItems.AddRange(
             values
+                .Where(value =>
+                    !string.IsNullOrWhiteSpace(value))
                 .GroupBy(
-                    value => string.IsNullOrWhiteSpace(value)
-                        ? "(пусто)"
-                        : value,
+                    value => value,
                     StringComparer.CurrentCultureIgnoreCase)
                 .Select(group => new StatisticsItem
                 {
                     Value = group.Key,
                     Count = group.Count(),
-                    Share = totalCount == 0
+                    Share = filledCount == 0
                         ? 0
-                        : (double)group.Count() / totalCount
+                        : (double)group.Count() / filledCount
                 })
                 .OrderByDescending(item => item.Count)
                 .ThenBy(item => item.Value));

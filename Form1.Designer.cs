@@ -50,12 +50,15 @@ partial class Form1
         statisticsGrid = new System.Windows.Forms.DataGridView();
         statisticsChartPanel = new System.Windows.Forms.Panel();
         statisticsTopPanel = new System.Windows.Forms.Panel();
+        statisticsDetailsLabel = new System.Windows.Forms.Label();
+        statisticsModeComboBox = new System.Windows.Forms.ComboBox();
+        statisticsModeLabel = new System.Windows.Forms.Label();
+        statisticsFilterLabel = new System.Windows.Forms.Label();
         statisticsEmptyLabel = new System.Windows.Forms.Label();
         statisticsUniqueLabel = new System.Windows.Forms.Label();
         statisticsTotalLabel = new System.Windows.Forms.Label();
         statisticsColumnComboBox = new System.Windows.Forms.ComboBox();
         statisticsColumnLabel = new System.Windows.Forms.Label();
-        statisticsFilterLabel = new System.Windows.Forms.Label();
         topPanel.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)documentsGrid).BeginInit();
         mainTabControl.SuspendLayout();
@@ -250,7 +253,7 @@ partial class Form1
         // statisticsSplitContainer
         // 
         statisticsSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-        statisticsSplitContainer.Location = new System.Drawing.Point(3, 73);
+        statisticsSplitContainer.Location = new System.Drawing.Point(3, 103);
         statisticsSplitContainer.Name = "statisticsSplitContainer";
         // 
         // statisticsSplitContainer.Panel1
@@ -260,7 +263,7 @@ partial class Form1
         // statisticsSplitContainer.Panel2
         // 
         statisticsSplitContainer.Panel2.Controls.Add(statisticsChartPanel);
-        statisticsSplitContainer.Size = new System.Drawing.Size(1170, 467);
+        statisticsSplitContainer.Size = new System.Drawing.Size(1170, 437);
         statisticsSplitContainer.SplitterDistance = 570;
         statisticsSplitContainer.TabIndex = 1;
         statisticsSplitContainer.Text = "splitContainer1";
@@ -278,7 +281,7 @@ partial class Form1
         statisticsGrid.ReadOnly = true;
         statisticsGrid.RowHeadersVisible = false;
         statisticsGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-        statisticsGrid.Size = new System.Drawing.Size(570, 467);
+        statisticsGrid.Size = new System.Drawing.Size(570, 437);
         statisticsGrid.TabIndex = 0;
         statisticsGrid.Text = "dataGridView1";
         // 
@@ -289,11 +292,14 @@ partial class Form1
         statisticsChartPanel.Dock = System.Windows.Forms.DockStyle.Fill;
         statisticsChartPanel.Location = new System.Drawing.Point(0, 0);
         statisticsChartPanel.Name = "statisticsChartPanel";
-        statisticsChartPanel.Size = new System.Drawing.Size(596, 467);
+        statisticsChartPanel.Size = new System.Drawing.Size(596, 437);
         statisticsChartPanel.TabIndex = 0;
         // 
         // statisticsTopPanel
         // 
+        statisticsTopPanel.Controls.Add(statisticsDetailsLabel);
+        statisticsTopPanel.Controls.Add(statisticsModeComboBox);
+        statisticsTopPanel.Controls.Add(statisticsModeLabel);
         statisticsTopPanel.Controls.Add(statisticsFilterLabel);
         statisticsTopPanel.Controls.Add(statisticsEmptyLabel);
         statisticsTopPanel.Controls.Add(statisticsUniqueLabel);
@@ -303,8 +309,45 @@ partial class Form1
         statisticsTopPanel.Dock = System.Windows.Forms.DockStyle.Top;
         statisticsTopPanel.Location = new System.Drawing.Point(3, 3);
         statisticsTopPanel.Name = "statisticsTopPanel";
-        statisticsTopPanel.Size = new System.Drawing.Size(1170, 70);
+        statisticsTopPanel.Size = new System.Drawing.Size(1170, 100);
         statisticsTopPanel.TabIndex = 0;
+        // 
+        // statisticsDetailsLabel
+        // 
+        statisticsDetailsLabel.AutoSize = true;
+        statisticsDetailsLabel.Location = new System.Drawing.Point(481, 40);
+        statisticsDetailsLabel.Name = "statisticsDetailsLabel";
+        statisticsDetailsLabel.Size = new System.Drawing.Size(89, 15);
+        statisticsDetailsLabel.TabIndex = 8;
+        statisticsDetailsLabel.Text = "Тип данных: —";
+        // 
+        // statisticsModeComboBox
+        // 
+        statisticsModeComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+        statisticsModeComboBox.FormattingEnabled = true;
+        statisticsModeComboBox.Location = new System.Drawing.Point(315, 37);
+        statisticsModeComboBox.Name = "statisticsModeComboBox";
+        statisticsModeComboBox.Size = new System.Drawing.Size(150, 23);
+        statisticsModeComboBox.TabIndex = 7;
+        // 
+        // statisticsModeLabel
+        // 
+        statisticsModeLabel.AutoSize = true;
+        statisticsModeLabel.Location = new System.Drawing.Point(214, 40);
+        statisticsModeLabel.Name = "statisticsModeLabel";
+        statisticsModeLabel.Size = new System.Drawing.Size(95, 15);
+        statisticsModeLabel.TabIndex = 6;
+        statisticsModeLabel.Text = "Режим анализа:";
+        // 
+        // statisticsFilterLabel
+        // 
+        statisticsFilterLabel.AutoSize = true;
+        statisticsFilterLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+        statisticsFilterLabel.Location = new System.Drawing.Point(5, 40);
+        statisticsFilterLabel.Name = "statisticsFilterLabel";
+        statisticsFilterLabel.Size = new System.Drawing.Size(184, 15);
+        statisticsFilterLabel.TabIndex = 5;
+        statisticsFilterLabel.Text = "Активный фильтр: отсутствует";
         // 
         // statisticsEmptyLabel
         // 
@@ -351,16 +394,6 @@ partial class Form1
         statisticsColumnLabel.TabIndex = 0;
         statisticsColumnLabel.Text = "Колонка для анализа:";
         // 
-        // statisticsFilterLabel
-        // 
-        statisticsFilterLabel.AutoSize = true;
-        statisticsFilterLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-        statisticsFilterLabel.Location = new System.Drawing.Point(5, 40);
-        statisticsFilterLabel.Name = "statisticsFilterLabel";
-        statisticsFilterLabel.Size = new System.Drawing.Size(184, 15);
-        statisticsFilterLabel.TabIndex = 5;
-        statisticsFilterLabel.Text = "Активный фильтр: отсутствует";
-        // 
         // Form1
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -386,6 +419,12 @@ partial class Form1
         statisticsTopPanel.PerformLayout();
         ResumeLayout(false);
     }
+
+    private System.Windows.Forms.Label statisticsDetailsLabel;
+
+    private System.Windows.Forms.ComboBox statisticsModeComboBox;
+
+    private System.Windows.Forms.Label statisticsModeLabel;
 
     private System.Windows.Forms.Label statisticsFilterLabel;
 

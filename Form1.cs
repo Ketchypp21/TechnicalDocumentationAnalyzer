@@ -9,9 +9,17 @@ public partial class Form1 : Form
     private DataTable? _sourceTable;
     private string? _currentFilePath;
 
+    // Запрещает обработку событий, пока интерфейс
+    // перестраивается под новый CSV.
+    private bool _isUpdatingInterface;
+
     public Form1()
     {
         InitializeComponent();
+
+        documentsGrid.VirtualMode = false;
+        statisticsGrid.VirtualMode = false;
+
         InitializeStatistics();
         FillEncodingList();
 
@@ -24,10 +32,18 @@ public partial class Form1 : Form
             FilterColumnComboBox_SelectedIndexChanged;
 
         filterValueComboBox.SelectedIndexChanged +=
-            (_, _) => ApplyFilters();
+            (_, _) =>
+            {
+                if (!_isUpdatingInterface)
+                    ApplyFilters();
+            };
 
         searchTextBox.TextChanged +=
-            (_, _) => ApplyFilters();
+            (_, _) =>
+            {
+                if (!_isUpdatingInterface)
+                    ApplyFilters();
+            };
 
         resetFiltersButton.Click +=
             ResetFiltersButton_Click;
@@ -98,8 +114,11 @@ public partial class Form1 : Form
         object? sender,
         EventArgs e)
     {
-        if (_currentFilePath is null)
+        if (_currentFilePath is null ||
+            _isUpdatingInterface)
+        {
             return;
+        }
 
         LoadCurrentFile(showSuccessMessage: false);
     }
@@ -118,27 +137,44 @@ public partial class Form1 : Form
             Encoding? selectedEncoding =
                 encodingItem?.Encoding;
 
+            // Сначала файл полностью загружается
+            // во временную таблицу. Текущие данные
+            // не меняются, если загрузка завершится ошибкой.
             DataTable loadedTable = CsvLoader.Load(
                 _currentFilePath,
                 selectedEncoding);
 
-            _sourceTable = loadedTable;
+            _isUpdatingInterface = true;
 
-            documentsGrid.DataSource =
-                _sourceTable.DefaultView;
+            try
+            {
+                _sourceTable = loadedTable;
 
-            FillColumnFilter();
-            FillStatisticsColumnList();
+                // Фильтры предыдущего CSV не должны
+                // применяться к новому набору колонок.
+                searchTextBox.Clear();
 
-            fileNameLabel.Text =
-                $"Файл: {Path.GetFileName(_currentFilePath)}";
+                documentsGrid.DataSource =
+                    _sourceTable.DefaultView;
 
-            Text =
-                $"Анализ технической документации — " +
-                $"{Path.GetFileName(_currentFilePath)}";
+                FillColumnFilter();
+                FillStatisticsColumnList();
 
-            UpdateRecordCount();
-            UpdateStatistics();
+                fileNameLabel.Text =
+                    $"Файл: {Path.GetFileName(_currentFilePath)}";
+
+                Text =
+                    $"Анализ технической документации — " +
+                    $"{Path.GetFileName(_currentFilePath)}";
+            }
+            finally
+            {
+                _isUpdatingInterface = false;
+            }
+
+            // Единственный пересчёт после того,
+            // как все списки уже обновлены.
+            ApplyFilters();
 
             if (showSuccessMessage)
             {
@@ -189,6 +225,9 @@ public partial class Form1 : Form
         object? sender,
         EventArgs e)
     {
+        if (_isUpdatingInterface)
+            return;
+
         filterValueComboBox.Items.Clear();
         filterValueComboBox.Items.Add("Все значения");
 
@@ -203,8 +242,19 @@ public partial class Form1 : Form
         }
 
         string columnName =
-            filterColumnComboBox.SelectedItem!
-                .ToString()!;
+            filterColumnComboBox.SelectedItem?
+                .ToString()
+            ?? string.Empty;
+
+        // Дополнительная защита от старого имени колонки.
+        if (!_sourceTable.Columns.Contains(columnName))
+        {
+            filterValueComboBox.Enabled = false;
+            filterValueComboBox.SelectedIndex = 0;
+
+            ApplyFilters();
+            return;
+        }
 
         var values = _sourceTable.Rows
             .Cast<DataRow>()
@@ -230,8 +280,11 @@ public partial class Form1 : Form
 
     private void ApplyFilters()
     {
-        if (_sourceTable is null)
+        if (_isUpdatingInterface ||
+            _sourceTable is null)
+        {
             return;
+        }
 
         var expressions = new List<string>();
 
@@ -256,19 +309,22 @@ public partial class Form1 : Form
                     columnExpressions)})");
         }
 
+        string? selectedColumn =
+            filterColumnComboBox.SelectedItem?
+                .ToString();
+
+        string? selectedValue =
+            filterValueComboBox.SelectedItem?
+                .ToString();
+
         if (filterColumnComboBox.SelectedIndex > 0 &&
-            filterValueComboBox.SelectedIndex > 0)
+            filterValueComboBox.SelectedIndex > 0 &&
+            !string.IsNullOrWhiteSpace(selectedColumn) &&
+            selectedValue is not null &&
+            _sourceTable.Columns.Contains(selectedColumn))
         {
-            string columnName =
-                filterColumnComboBox.SelectedItem!
-                    .ToString()!;
-
-            string selectedValue =
-                filterValueComboBox.SelectedItem!
-                    .ToString()!;
-
             expressions.Add(
-                $"[{EscapeColumnName(columnName)}] = " +
+                $"[{EscapeColumnName(selectedColumn)}] = " +
                 $"'{EscapeFilterValue(selectedValue)}'");
         }
 
@@ -283,11 +339,28 @@ public partial class Form1 : Form
         object? sender,
         EventArgs e)
     {
-        searchTextBox.Clear();
+        if (_sourceTable is null)
+            return;
 
-        if (filterColumnComboBox.Items.Count > 0)
+        _isUpdatingInterface = true;
+
+        try
         {
-            filterColumnComboBox.SelectedIndex = 0;
+            searchTextBox.Clear();
+
+            if (filterColumnComboBox.Items.Count > 0)
+            {
+                filterColumnComboBox.SelectedIndex = 0;
+            }
+
+            filterValueComboBox.Items.Clear();
+            filterValueComboBox.Items.Add("Все значения");
+            filterValueComboBox.SelectedIndex = 0;
+            filterValueComboBox.Enabled = false;
+        }
+        finally
+        {
+            _isUpdatingInterface = false;
         }
 
         ApplyFilters();

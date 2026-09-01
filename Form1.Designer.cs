@@ -335,9 +335,9 @@ partial class Form1
         statisticsModeLabel.AutoSize = true;
         statisticsModeLabel.Location = new System.Drawing.Point(214, 40);
         statisticsModeLabel.Name = "statisticsModeLabel";
-        statisticsModeLabel.Size = new System.Drawing.Size(95, 15);
+        statisticsModeLabel.Size = new System.Drawing.Size(79, 15);
         statisticsModeLabel.TabIndex = 6;
-        statisticsModeLabel.Text = "Режим анализа:";
+        statisticsModeLabel.Text = "Вид графика:";
         // 
         // statisticsFilterLabel
         // 
